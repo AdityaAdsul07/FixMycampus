@@ -106,7 +106,7 @@
 <body>
   <header class="navbar">
     <a class="brand" href="index.html">FixMyCampus<span>.</span></a>
-    <a href="index.html">Report an issue</a>
+    <span><a href="index.html">Report an issue</a> &nbsp;·&nbsp; <a id="auth-link" href="login.html">Log in</a></span>
   </header>
 
   <main class="tracking-page">
@@ -159,14 +159,12 @@
         </div>
       </div>
 
-      <div class="tracking-timeline">
-        <p><strong>Submitted</strong><br><span class="muted">Your issue was reported.</span></p>
-        <p><strong>In progress</strong><br><span class="muted">The campus team is working on the issue.</span></p>
-        <p><strong>Resolved</strong><br><span class="muted">The issue has been marked as resolved.</span></p>
-      </div>
+      <h3 style="margin: 22px 0 10px;">Progress timeline</h3>
+      <ol id="tracking-timeline" class="timeline"></ol>
     </section>
   </main>
 
+  <script src="config.js"></script>
   <script src="track.js"></script>
 </body>
 </html>

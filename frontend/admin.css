@@ -829,3 +829,19 @@
   color: var(--admin-primary);
   text-decoration: underline;
 }
+
+/* ---------- Report modal: assignment + timeline ---------- */
+.assign-box { margin-top: 18px; padding: 14px; background: var(--light-green); border-radius: 12px; }
+.assign-box label { display: block; font-weight: 700; margin-bottom: 8px; }
+.assign-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.assign-row select, .assign-row input {
+  flex: 1 1 180px; padding: 10px 12px; border: 1px solid #cfd8d3; border-radius: 10px; background: #fff;
+}
+.assign-message { margin: 8px 0 0; font-weight: 600; min-height: 18px; }
+.timeline-heading { margin: 20px 0 10px; }
+.assign-box[hidden] { display: none; }
+.assign-row .primary-button {
+  padding: 10px 20px; border: 0; border-radius: 10px; background: var(--dark);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.assign-row .primary-button:disabled { opacity: .6; cursor: wait; }

@@ -1,5 +1,5 @@
 
-const API = "http://127.0.0.1:8000/api";
+const API = FMC.API_BASE;
 
 const issueForm = document.getElementById("issue-form");
 const submitButton = document.getElementById("submit-button");
@@ -171,7 +171,7 @@ issueForm.addEventListener("submit", async event => {
   try {
     const issue = await requestJSON(`${API}/issues`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: FMC.authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload)
     });
 
@@ -181,6 +181,7 @@ issueForm.addEventListener("submit", async event => {
     successBox.classList.remove("hidden");
 
     issueForm.reset();
+    prefillReporter();
 
     await Promise.all([loadStats(), loadIssues()]);
 
@@ -262,8 +263,16 @@ document.getElementById("new-tracking-id").addEventListener("click", async event
   }
 });
 
+// Logged-in users don't need to retype their name.
+function prefillReporter() {
+  const auth = FMC.getAuth();
+  const nameField = document.getElementById("reporter_name");
+  if (auth && nameField && !nameField.value) nameField.value = auth.user.full_name;
+}
+
 // Load the saved data when the page opens.
 async function initializeDashboard() {
+  prefillReporter();
   await Promise.all([loadStats(), loadIssues()]);
 }
 

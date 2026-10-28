@@ -1,5 +1,5 @@
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = FMC.API_BASE;
 
 const trackingForm = document.getElementById("tracking-form");
 const trackingInput = document.getElementById("tracking-id");
@@ -24,7 +24,8 @@ trackingForm.addEventListener("submit", async (event) => {
 
   try {
     const response = await fetch(
-      `${API_URL}/issues/${encodeURIComponent(trackingId)}`
+      `${API_URL}/issues/${encodeURIComponent(trackingId)}`,
+      { headers: FMC.authHeaders() }
     );
 
     const issue = await response.json();
@@ -53,6 +54,7 @@ trackingForm.addEventListener("submit", async (event) => {
     document.getElementById("result-priority").textContent =
       issue.priority;
 
+    await renderTimeline(issue.tracking_id);
     trackingResult.hidden = false;
   } catch (error) {
     trackingMessage.textContent =
@@ -62,3 +64,45 @@ trackingForm.addEventListener("submit", async (event) => {
     trackButton.textContent = "Track issue";
   }
 });
+
+
+/* Progress timeline: one entry per status change, newest last. */
+async function renderTimeline(trackingId) {
+  const list = document.getElementById("tracking-timeline");
+  list.innerHTML = "";
+
+  try {
+    const response = await fetch(
+      `${API_URL}/issues/${encodeURIComponent(trackingId)}/history`,
+      { headers: FMC.authHeaders() }
+    );
+    const events = await response.json();
+    if (!response.ok || !Array.isArray(events)) throw new Error("No history");
+
+    events.forEach(event => {
+      const item = document.createElement("li");
+
+      const title = document.createElement("strong");
+      title.textContent = event.status;
+      item.appendChild(title);
+
+      const when = document.createElement("span");
+      when.className = "timeline-time";
+      when.textContent = new Date(event.created_at).toLocaleString([], {
+        dateStyle: "medium", timeStyle: "short"
+      });
+      item.appendChild(when);
+
+      if (event.note) {
+        const note = document.createElement("p");
+        note.textContent = event.note;
+        item.appendChild(note);
+      }
+      list.appendChild(item);
+    });
+  } catch {
+    const item = document.createElement("li");
+    item.textContent = "Timeline is not available right now.";
+    list.appendChild(item);
+  }
+}

@@ -39,7 +39,8 @@ def main():
 
     print("\nServer URLs:")
     print("  • Public Portal:    http://127.0.0.1:5500/index.html")
-    print("  • Admin Dashboard:  http://127.0.0.1:5500/admin.html")
+    print("  • Login:            http://127.0.0.1:5500/login.html")
+    print("  • Admin Dashboard:  http://127.0.0.1:5500/admin.html  (login required)")
     print("  • Track Issue:      http://127.0.0.1:5500/track.html")
     print("  • Backend API Docs: http://127.0.0.1:8000/docs")
     print("=" * 55)
@@ -48,7 +49,7 @@ def main():
     print("Opening browser tabs...")
     try:
         webbrowser.open("http://127.0.0.1:5500/index.html")
-        webbrowser.open("http://127.0.0.1:5500/admin.html")
+        webbrowser.open("http://127.0.0.1:5500/login.html")
     except Exception as e:
         print(f"Note: Could not open browser automatically: {e}")
 

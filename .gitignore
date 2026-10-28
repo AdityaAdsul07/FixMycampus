@@ -10,6 +10,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.pytest_cache/
+
+# Secrets and local credentials
+.jwt_secret
 
 # SQLite databases
 *.db
@@ -20,4 +24,3 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
-

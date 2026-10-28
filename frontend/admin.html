@@ -52,16 +52,20 @@
       <div class="sidebar-bottom">
 
         <div class="admin-profile">
-          <div class="profile-avatar">A</div>
+          <div class="profile-avatar" id="profile-avatar">A</div>
 
           <div>
-            <strong>Administrator</strong>
-            <span>Campus Management</span>
+            <strong id="profile-name">Administrator</strong>
+            <span id="profile-role">Campus Management</span>
           </div>
         </div>
 
         <a href="index.html" class="sidebar-home">
           ← Back to website
+        </a>
+
+        <a href="#" id="logout-link" class="sidebar-home">
+          Log out →
         </a>
 
       </div>
@@ -460,7 +464,26 @@
           <strong id="detail-updated">—</strong>
         </div>
 
+        <div class="report-detail-item">
+          <span>Assigned to</span>
+          <strong id="detail-assigned">Not assigned</strong>
+        </div>
+
       </div>
+
+      <div id="assign-box" class="assign-box" hidden>
+        <label for="assign-staff">Assign to staff member</label>
+        <div class="assign-row">
+          <select id="assign-staff"></select>
+          <input id="assign-note" type="text" maxlength="300"
+                 placeholder="Optional note (visible to the reporter)">
+          <button type="button" id="assign-save" class="primary-button">Assign</button>
+        </div>
+        <p id="assign-message" class="assign-message" role="status"></p>
+      </div>
+
+      <h3 class="timeline-heading">Activity timeline</h3>
+      <ol id="detail-timeline" class="timeline"></ol>
     </div>
 
     <div class="report-modal-footer">
@@ -509,8 +532,10 @@
 
 
   <!-- Chart.js must load before admin.js -->
+  <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="admin.js"></script>
+  <script src="admin-extras.js"></script>
 
 </body>
 </html>

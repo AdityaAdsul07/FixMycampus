@@ -5,7 +5,13 @@
    FIXMYCAMPUS — ADMIN DASHBOARD
 ========================================= */
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = FMC.API_BASE;
+
+/* Only staff and administrators may use this page. */
+const session = FMC.getAuth();
+if (!session || !FMC.isStaff(session.user)) {
+  window.location.replace("login.html?next=admin.html");
+}
 
 /* DOM ELEMENTS */
 
@@ -107,6 +113,10 @@ async function readResponse(response) {
     }
   }
 
+  if (response.status === 401) {
+    FMC.logout(); // token missing, invalid or expired
+  }
+
   if (!response.ok) {
     throw new Error(
       data.detail || `Request failed with status ${response.status}`
@@ -140,7 +150,7 @@ async function loadAdminReports() {
 
   try {
     const response = await fetch(`${API_URL}/issues`, {
-      headers: { Accept: "application/json" }
+      headers: FMC.authHeaders({ Accept: "application/json" })
     });
 
     const reports = await readResponse(response);
@@ -376,10 +386,10 @@ async function updateReportStatus(trackingId, select) {
       `${API_URL}/issues/${encodeURIComponent(trackingId)}/status`,
       {
         method: "PATCH",
-        headers: {
+        headers: FMC.authHeaders({
           "Content-Type": "application/json",
           Accept: "application/json"
-        },
+        }),
         body: JSON.stringify({ status: newStatus })
       }
     );
@@ -864,6 +874,8 @@ if (analyticsRefreshButton) {
     setField("created_at", report.created_at);
     setField("updated_at", report.updated_at);
 
+    if (window.fmcOnReportOpen) window.fmcOnReportOpen(report);
+
     modal.hidden = false;
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
@@ -920,4 +932,6 @@ if (analyticsRefreshButton) {
    INITIALIZE DASHBOARD
 ========================================= */
 
-loadAdminReports();
+if (session && FMC.isStaff(session.user)) {
+  loadAdminReports();
+}
