@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Issue | FixMyCampus</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .tracking-page {
+      max-width: 760px;
+      margin: 48px auto;
+      padding: 24px;
+    }
+
+    .tracking-hero {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .tracking-hero h1 {
+      margin-bottom: 10px;
+    }
+
+    .tracking-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .tracking-form input {
+      flex: 1;
+      min-width: 220px;
+      padding: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .tracking-result {
+      margin-top: 24px;
+    }
+
+    .tracking-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .tracking-detail {
+      padding: 14px;
+      background: #f8fafc;
+      border-radius: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .tracking-detail span {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .tracking-status {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 20px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .tracking-error {
+      color: #b91c1c;
+      margin-top: 14px;
+    }
+
+    .tracking-timeline {
+      border-left: 3px solid #d1d5db;
+      margin: 24px 0 8px 8px;
+      padding-left: 18px;
+    }
+
+    .tracking-timeline p {
+      margin: 0 0 18px;
+    }
+
+    @media (max-width: 520px) {
+      .tracking-page {
+        margin: 20px auto;
+        padding: 16px;
+      }
+
+      .tracking-details {
+        grid-template-columns: 1fr;
+      }
+
+      .tracking-form button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="index.html">FixMyCampus<span>.</span></a>
+    <a href="index.html">Report an issue</a>
+  </header>
+
+  <main class="tracking-page">
+    <section class="panel tracking-hero">
+      <p class="eyebrow">CAMPUS SUPPORT</p>
+      <h1>Track your issue</h1>
+      <p class="muted">
+        Enter the tracking ID you received after submitting your campus issue.
+      </p>
+
+      <form id="tracking-form" class="tracking-form">
+        <input
+          id="tracking-id"
+          type="text"
+          placeholder="Example: FMC-3826B3F1"
+          aria-label="Issue tracking ID"
+          required
+        >
+        <button type="submit" class="primary-button" id="track-button">
+          Track issue
+        </button>
+      </form>
+
+      <p id="tracking-message" class="tracking-error" role="status"></p>
+    </section>
+
+    <section id="tracking-result" class="panel tracking-result" hidden>
+      <h2 id="issue-title"></h2>
+      <p id="issue-description" class="muted"></p>
+
+      <div class="tracking-details">
+        <div class="tracking-detail">
+          <span>Tracking ID</span>
+          <strong id="result-id"></strong>
+        </div>
+
+        <div class="tracking-detail">
+          <span>Current status</span>
+          <strong id="result-status" class="tracking-status"></strong>
+        </div>
+
+        <div class="tracking-detail">
+          <span>Location</span>
+          <strong id="result-location"></strong>
+        </div>
+
+        <div class="tracking-detail">
+          <span>Priority</span>
+          <strong id="result-priority"></strong>
+        </div>
+      </div>
+
+      <div class="tracking-timeline">
+        <p><strong>Submitted</strong><br><span class="muted">Your issue was reported.</span></p>
+        <p><strong>In progress</strong><br><span class="muted">The campus team is working on the issue.</span></p>
+        <p><strong>Resolved</strong><br><span class="muted">The issue has been marked as resolved.</span></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="track.js"></script>
+</body>
+</html>

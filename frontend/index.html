@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102b26">
+  <title>FixMyCampus | Campus Care</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .track-nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 15px;
+      border: 1px solid #cbd5d1;
+      border-radius: 10px;
+      color: #102b26;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: background 0.2s ease;
+    }
+
+    .track-nav-link:hover {
+      background: #e8f1ed;
+    }
+
+    @media (max-width: 600px) {
+      .topbar-actions {
+        gap: 8px;
+      }
+
+      .track-nav-link {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .system-status {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <a href="index.html" class="brand">
+      <span class="brand-icon">F</span>
+      <span>
+        FixMyCampus
+        <small>YOUR CAMPUS, BETTER</small>
+      </span>
+    </a>
+
+    <div class="topbar-actions">
+      <a class="track-nav-link" href="track.html">
+        Track Your Issue ↗
+      </a>
+
+      <span class="system-status">
+        <span class="dot"></span>
+        Campus care portal
+      </span>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Hero section -->
+    <section class="hero">
+      <div>
+        <p class="eyebrow">THE CAMPUS CARE DESK</p>
+
+        <h1>
+          Let's make our<br>
+          <span>campus better.</span>
+        </h1>
+
+        <p class="hero-copy">
+          Spot a problem? Report it here. Track your report and help
+          make your campus a better place for everyone.
+        </p>
+
+        <a class="primary-link" href="#report-form">
+          + Report an issue
+        </a>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="art-circle"></div>
+
+        <div class="art-card">
+          <span class="art-check">✓</span>
+          <strong>Small actions.</strong>
+          <strong>Big improvements.</strong>
+          <p>Every report matters.</p>
+        </div>
+
+        <span class="art-spark spark-one">✳</span>
+        <span class="art-spark spark-two">✦</span>
+      </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats-grid" aria-label="Issue statistics">
+      <article class="stat-card">
+        <span class="stat-icon">▤</span>
+        <p>Total reports</p>
+        <strong id="total-count">—</strong>
+        <small>All campus issues</small>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-icon orange">◷</span>
+        <p>Open issues</p>
+        <strong id="open-count">—</strong>
+        <small>Awaiting resolution</small>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-icon green">✓</span>
+        <p>Resolved</p>
+        <strong id="resolved-count">—</strong>
+        <small>Successfully completed</small>
+      </article>
+    </section>
+
+    <!-- Report form and issue tracker -->
+    <section class="content-grid">
+
+      <!-- Report an issue -->
+      <article class="panel report-panel" id="report-form">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">HAVE YOU SPOTTED SOMETHING?</p>
+            <h2>Report an issue</h2>
+          </div>
+
+          <span class="heading-icon">＋</span>
+        </div>
+
+        <p class="muted">
+          Tell us what needs attention on campus.
+        </p>
+
+        <form id="issue-form">
+          <label for="title">Issue title <span>*</span></label>
+          <input
+            id="title"
+            name="title"
+            required
+            minlength="5"
+            maxlength="120"
+            placeholder="e.g. Broken fan in classroom"
+          >
+
+          <label for="description">Description <span>*</span></label>
+          <textarea
+            id="description"
+            name="description"
+            required
+            minlength="10"
+            maxlength="3000"
+            rows="4"
+            placeholder="Describe the problem in detail..."
+          ></textarea>
+
+          <div class="form-row">
+            <div>
+              <label for="category">Category <span>*</span></label>
+
+              <select id="category" name="category" required>
+                <option value="">Choose category</option>
+                <option>Electrical</option>
+                <option>Water Supply</option>
+                <option>Cleanliness</option>
+                <option>Classroom</option>
+                <option>Washroom</option>
+                <option>Furniture</option>
+                <option>Internet</option>
+                <option>Safety</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="priority">Priority</label>
+
+              <select id="priority" name="priority">
+                <option>Normal</option>
+                <option>Low</option>
+                <option>High</option>
+                <option>Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="location">
+            Location on campus <span>*</span>
+          </label>
+
+          <input
+            id="location"
+            name="location"
+            required
+            minlength="2"
+            maxlength="120"
+            placeholder="e.g. Building A, Room 204"
+          >
+
+          <label for="reporter_name">
+            Your name <span>*</span>
+          </label>
+
+          <input
+            id="reporter_name"
+            name="reporter_name"
+            required
+            minlength="2"
+            maxlength="80"
+            placeholder="Enter your name"
+          >
+
+          <button
+            type="submit"
+            class="submit-button"
+            id="submit-button"
+          >
+            Submit report <span>→</span>
+          </button>
+
+          <p
+            class="form-message"
+            id="form-message"
+            role="status"
+          ></p>
+        </form>
+
+        <!-- Submission confirmation -->
+        <div
+          id="success-box"
+          class="success-box hidden"
+          role="status"
+        >
+          <span class="success-check">✓</span>
+
+          <div>
+            <strong>Report submitted!</strong>
+            <p>Your tracking ID is:</p>
+
+            <button
+              type="button"
+              class="tracking-copy"
+              id="new-tracking-id"
+            ></button>
+
+            <small>
+              Save this ID to find your report later.
+            </small>
+
+            <p>
+              <a href="track.html">Track this report →</a>
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <!-- Recent issues -->
+      <article class="panel issues-panel" id="issues">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CAMPUS TRANSPARENCY</p>
+            <h2>Issue tracker</h2>
+          </div>
+
+          <button
+            class="refresh-button"
+            id="refresh-button"
+            type="button"
+            title="Refresh reports"
+            aria-label="Refresh reports"
+          >↻</button>
+        </div>
+
+        <p class="muted">
+          See reports recorded in the system.
+        </p>
+
+        <form id="search-form" class="search-box">
+          <input
+            id="search-input"
+            placeholder="Search reports or tracking ID..."
+            aria-label="Search reports"
+          >
+
+          <button type="submit" aria-label="Search">⌕</button>
+        </form>
+
+        <div id="search-result" class="search-result hidden"></div>
+
+        <div class="filter-row">
+          <span>Recent reports</span>
+
+          <select id="status-filter" aria-label="Filter by status">
+            <option value="All">All statuses</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Closed">Closed</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+
+        <div
+          id="issues-list"
+          class="issues-list"
+          aria-live="polite"
+        >
+          <div class="loading">Loading campus reports...</div>
+        </div>
+
+        <button
+          class="text-button"
+          id="clear-search"
+          type="button"
+        >
+          Show all reports
+        </button>
+      </article>
+
+    </section>
+
+    <footer>
+      <span class="brand-footer">FixMyCampus</span>
+      <span>Better spaces start with us.</span>
+      <span>Student campus care portal</span>
+    </footer>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

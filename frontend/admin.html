@@ -1,0 +1,516 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>FixMyCampus | Admin Dashboard</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body class="admin-page">
+
+  <div class="admin-layout">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="admin-sidebar">
+
+      <a class="admin-brand" href="index.html">
+        <span class="brand-icon">F</span>
+        <span>FixMyCampus<span class="brand-dot">.</span></span>
+      </a>
+
+      <p class="sidebar-label">WORKSPACE</p>
+
+      <nav class="sidebar-nav" aria-label="Admin navigation">
+
+        <a href="#dashboard" class="sidebar-link active">
+          <span class="sidebar-icon">▦</span>
+          Dashboard
+        </a>
+
+        <a href="#reports" class="sidebar-link">
+          <span class="sidebar-icon">☷</span>
+          Manage Reports
+        </a>
+
+        <a href="#analytics" class="sidebar-link">
+          <span class="sidebar-icon">▥</span>
+          Analytics
+        </a>
+
+        <a href="#settings" class="sidebar-link">
+          <span class="sidebar-icon">⚙</span>
+          Settings
+        </a>
+
+      </nav>
+
+      <div class="sidebar-bottom">
+
+        <div class="admin-profile">
+          <div class="profile-avatar">A</div>
+
+          <div>
+            <strong>Administrator</strong>
+            <span>Campus Management</span>
+          </div>
+        </div>
+
+        <a href="index.html" class="sidebar-home">
+          ← Back to website
+        </a>
+
+      </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <main class="admin-main" id="dashboard">
+
+      <!-- HEADER -->
+      <header class="admin-topbar">
+
+        <div>
+          <p class="eyebrow">CAMPUS MANAGEMENT</p>
+          <h1>Admin Dashboard</h1>
+
+          <p class="muted">
+            Monitor campus issues and keep your campus running smoothly.
+          </p>
+        </div>
+
+        <button
+          id="admin-refresh"
+          class="primary-button"
+          type="button"
+        >
+          ↻ Refresh reports
+        </button>
+
+      </header>
+
+
+      <!-- ================= STATISTICS ================= -->
+      <section class="stats" aria-label="Report statistics">
+
+        <article class="stat-card total-card">
+          <div class="stat-heading">
+            <span>Total reports</span>
+            <span class="stat-icon">▦</span>
+          </div>
+
+          <strong id="admin-total">0</strong>
+          <small>All campus reports</small>
+        </article>
+
+
+        <article class="stat-card submitted-card">
+          <div class="stat-heading">
+            <span>Submitted</span>
+            <span class="stat-icon">↗</span>
+          </div>
+
+          <strong id="admin-submitted">0</strong>
+          <small>Awaiting action</small>
+        </article>
+
+
+        <article class="stat-card progress-card">
+          <div class="stat-heading">
+            <span>In progress</span>
+            <span class="stat-icon">◷</span>
+          </div>
+
+          <strong id="admin-progress">0</strong>
+          <small>Currently being handled</small>
+        </article>
+
+
+        <article class="stat-card resolved-card">
+          <div class="stat-heading">
+            <span>Resolved</span>
+            <span class="stat-icon">✓</span>
+          </div>
+
+          <strong id="admin-resolved">0</strong>
+          <small>Issues completed</small>
+        </article>
+
+      </section>
+
+
+      <!-- ================= MANAGE REPORTS ================= -->
+      <section
+        class="panel admin-reports-panel"
+        id="reports"
+      >
+
+        <div class="panel-heading">
+
+          <div>
+            <h2>Manage campus reports</h2>
+
+            <p class="muted">
+              Review reported issues and update their status.
+            </p>
+          </div>
+
+          <span class="live-indicator">● Live data</span>
+
+        </div>
+
+
+        <!-- SEARCH AND FILTERS -->
+        <div class="report-filters">
+
+          <input
+            type="search"
+            id="report-search"
+            placeholder="Search title, location, or tracking ID..."
+            aria-label="Search campus reports"
+          >
+
+          <select
+            id="status-filter"
+            aria-label="Filter by status"
+          >
+            <option value="All">All statuses</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Closed">Closed</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+
+          <select
+            id="priority-filter"
+            aria-label="Filter by priority"
+          >
+            <option value="All">All priorities</option>
+            <option value="Low">Low</option>
+            <option value="Normal">Normal</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+            <option value="Critical">Critical</option>
+          </select>
+
+          <button
+            type="button"
+            id="clear-filters"
+            class="secondary-button"
+          >
+            Clear filters
+          </button>
+
+        </div>
+
+
+        <!-- STATUS MESSAGES -->
+        <p
+          id="admin-message"
+          class="admin-message"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+
+        <!-- REPORTS TABLE -->
+        <div class="admin-table-wrap">
+
+          <table class="admin-table">
+
+            <thead>
+              <tr>
+                <th>Issue</th>
+                <th>Location</th>
+                <th>Priority</th>
+                <th>Tracking ID</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody id="admin-reports">
+              <tr>
+                <td colspan="5">Loading reports...</td>
+              </tr>
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= ANALYTICS ================= -->
+      <section
+        class="analytics-section"
+        id="analytics"
+      >
+
+        <div class="analytics-heading">
+
+          <div>
+            <p class="eyebrow">CAMPUS INSIGHTS</p>
+
+            <h2>Analytics Overview</h2>
+
+            <p class="muted">
+              Understand report status, priority, campus categories,
+              and issue reporting trends.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            id="analytics-refresh"
+            class="secondary-button"
+          >
+            ↻ Refresh charts
+          </button>
+
+        </div>
+
+
+        <!-- ALL FOUR CHARTS -->
+        <div class="analytics-grid">
+
+          <!-- CHART 1: REPORT STATUS -->
+          <article class="panel chart-panel">
+
+            <h3>Report Status</h3>
+
+            <p class="muted">
+              Current status of all reports
+            </p>
+
+            <div class="chart-container">
+              <canvas
+                id="status-chart"
+                role="img"
+                aria-label="Doughnut chart showing report counts by status"
+              ></canvas>
+            </div>
+
+          </article>
+
+
+          <!-- CHART 2: PRIORITY DISTRIBUTION -->
+          <article class="panel chart-panel">
+
+            <h3>Priority Distribution</h3>
+
+            <p class="muted">
+              Reported issue priority levels
+            </p>
+
+            <div class="chart-container">
+              <canvas
+                id="priority-chart"
+                role="img"
+                aria-label="Doughnut chart showing report counts by priority"
+              ></canvas>
+            </div>
+
+          </article>
+
+
+          <!-- CHART 3: ISSUE CATEGORIES -->
+          <article class="panel chart-panel category-chart-panel">
+
+            <h3>Issue Categories</h3>
+
+            <p class="muted">
+              Which campus areas need attention?
+            </p>
+
+            <div class="chart-container">
+              <canvas
+                id="category-chart"
+                role="img"
+                aria-label="Bar chart showing report counts by issue category"
+              ></canvas>
+            </div>
+
+          </article>
+
+
+          <!-- CHART 4: ISSUE TRENDS -->
+          <article class="panel chart-panel trends-chart-panel">
+
+            <h3>Issue Trends</h3>
+
+            <p class="muted">
+              Number of issues reported over time
+            </p>
+
+            <div class="chart-container">
+              <canvas
+                id="trends-chart"
+                role="img"
+                aria-label="Line chart showing the number of issues reported on each date"
+              ></canvas>
+            </div>
+
+          </article>
+
+        </div>
+
+
+        <!-- ANALYTICS STATUS -->
+        <p
+          id="analytics-message"
+          class="admin-message"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+      </section>
+      
+<!-- ================= REPORT DETAILS MODAL ================= -->
+<div
+  id="report-details-modal"
+  class="report-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="report-details-heading"
+  aria-hidden="true"
+  hidden
+>
+  <div class="report-modal-backdrop" data-close-modal></div>
+
+  <section class="report-modal-content">
+
+    <div class="report-modal-header">
+      <div>
+        <p class="eyebrow">CAMPUS MANAGEMENT</p>
+        <h2 id="report-details-heading">Report Details</h2>
+        <p class="muted">Complete information about this campus issue.</p>
+      </div>
+
+      <button
+        type="button"
+        id="close-report-details"
+        class="secondary-button"
+        aria-label="Close report details"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div id="report-details-content">
+
+      <div class="report-detail-item">
+        <span>Tracking ID</span>
+        <strong id="detail-tracking-id">—</strong>
+      </div>
+
+      <div class="report-detail-item">
+        <span>Issue title</span>
+        <strong id="detail-title">—</strong>
+      </div>
+
+      <div class="report-detail-item">
+        <span>Description</span>
+        <p id="detail-description">—</p>
+      </div>
+
+      <div class="report-detail-grid">
+
+        <div class="report-detail-item">
+          <span>Category</span>
+          <strong id="detail-category">—</strong>
+        </div>
+
+        <div class="report-detail-item">
+          <span>Location</span>
+          <strong id="detail-location">—</strong>
+        </div>
+
+        <div class="report-detail-item">
+          <span>Reporter name</span>
+          <strong id="detail-reporter">—</strong>
+        </div>
+
+        <div class="report-detail-item">
+          <span>Priority</span>
+          <strong id="detail-priority">—</strong>
+        </div>
+
+        <div class="report-detail-item">
+          <span>Current status</span>
+          <strong id="detail-status">—</strong>
+        </div>
+
+        <div class="report-detail-item">
+          <span>Created at</span>
+          <strong id="detail-created">—</strong>
+        </div>
+
+        <div class="report-detail-item">
+          <span>Last updated</span>
+          <strong id="detail-updated">—</strong>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="report-modal-footer">
+      <button
+        type="button"
+        id="close-report-details-footer"
+        class="primary-button"
+      >
+        Close details
+      </button>
+    </div>
+
+  </section>
+</div>
+
+
+
+      <!-- ================= SETTINGS ================= -->
+      <section
+        class="panel placeholder-panel"
+        id="settings"
+      >
+
+        <div class="placeholder-icon">⚙</div>
+
+        <div>
+          <h2>Settings</h2>
+
+          <p class="muted">
+            Administrator preferences and access controls
+            can be configured here.
+          </p>
+        </div>
+
+      </section>
+
+
+      <!-- ================= FOOTER ================= -->
+      <footer class="admin-footer">
+        FixMyCampus · Administration Portal
+      </footer>
+
+    </main>
+
+  </div>
+
+
+  <!-- Chart.js must load before admin.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="admin.js"></script>
+
+</body>
+</html>
