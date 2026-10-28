@@ -165,7 +165,79 @@ def seed_default_admin():
             db.commit()
 
 
-# ---------------- REQUEST MODELS ----------------
+# ---------------- AUTH DEPENDENCIES ----------------
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_bearer),
+    db: Session = Depends(get_db)
+) -> User:
+    if not credentials or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please log in.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    payload = decode_access_token(credentials.credentials)
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token. Please log in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        user_id = int(payload["sub"])
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Malformed authentication token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = db.scalar(select(User).where(User.id == user_id))
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account not found or disabled.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_bearer),
+    db: Session = Depends(get_db)
+) -> User | None:
+    if not credentials or not credentials.credentials:
+        return None
+    payload = decode_access_token(credentials.credentials)
+    if not payload or "sub" not in payload:
+        return None
+    try:
+        user_id = int(payload["sub"])
+        user = db.scalar(select(User).where(User.id == user_id))
+        return user if (user and user.is_active) else None
+    except Exception:
+        return None
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.ADMIN.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Administrator privileges required."
+        )
+    return user
+
+
+def require_staff_or_admin(user: User = Depends(get_current_user)) -> User:
+    if user.role not in (UserRole.ADMIN.value, UserRole.STAFF.value):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Staff or Administrator privileges required."
+        )
+    return user
+
+
+# ---------------- REQUEST / RESPONSE SCHEMAS ----------------
 
 class UserRegister(BaseModel):
     email: str = Field(min_length=5, max_length=120)
@@ -211,6 +283,12 @@ class IssueCreate(BaseModel):
 
 class StatusUpdate(BaseModel):
     status: IssueStatus
+    assigned_staff_name: str | None = None
+
+
+class IssueAssign(BaseModel):
+    assigned_to_id: int | None = None
+    assigned_staff_name: str | None = None
 
 
 class IssueOut(BaseModel):
@@ -244,7 +322,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="FixMyCampus",
     description="Campus Issue Reporting and Resolution System",
-    version="1.1.0",
+    version="1.2.0",
     lifespan=lifespan,
 )
 
@@ -262,6 +340,7 @@ def home():
     return {
         "app": "FixMyCampus",
         "message": "Campus issue reporting API is running!",
+        "version": "1.2.0",
         "docs": "/docs",
     }
 
@@ -271,22 +350,93 @@ def health():
     return {"status": "ok"}
 
 
+# ---------------- AUTHENTICATION ENDPOINTS ----------------
+
+@app.post("/api/auth/register", response_model=TokenResponse, status_code=201)
+def register_user(payload: UserRegister, db: Session = Depends(get_db)):
+    clean_email = payload.email.strip().lower()
+    existing = db.scalar(select(User).where(User.email == clean_email))
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A user with this email address is already registered."
+        )
+
+    user = User(
+        email=clean_email,
+        full_name=payload.full_name.strip(),
+        hashed_password=hash_password(payload.password),
+        role=payload.role.value,
+        department=payload.department.strip() if payload.department else None,
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    token = create_access_token(user.id, user.email, user.role)
+    return TokenResponse(access_token=token, token_type="bearer", user=user)
+
+
+@app.post("/api/auth/login", response_model=TokenResponse)
+def login_user(payload: UserLogin, db: Session = Depends(get_db)):
+    clean_email = payload.email.strip().lower()
+    user = db.scalar(select(User).where(User.email == clean_email))
+    if not user or not verify_password(payload.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password."
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account has been disabled. Please contact the administrator."
+        )
+
+    token = create_access_token(user.id, user.email, user.role)
+    return TokenResponse(access_token=token, token_type="bearer", user=user)
+
+
+@app.get("/api/auth/me", response_model=UserOut)
+def get_current_user_profile(user: User = Depends(get_current_user)):
+    return user
+
+
+@app.get("/api/staff", response_model=list[UserOut])
+def list_staff_members(db: Session = Depends(get_db)):
+    statement = (
+        select(User)
+        .where(User.role.in_([UserRole.STAFF.value, UserRole.ADMIN.value]))
+        .order_by(User.full_name.asc())
+    )
+    return db.scalars(statement).all()
+
+
 # ---------------- CREATE ISSUE ----------------
 
 @app.post("/api/issues", response_model=IssueOut, status_code=201)
 def create_issue(
     payload: IssueCreate,
+    current_user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
+    reporter = payload.reporter_name.strip()
+    user_id = None
+    if current_user:
+        user_id = current_user.id
+        if not reporter:
+            reporter = current_user.full_name
+
     issue = Issue(
         tracking_id=f"FMC-{uuid4().hex[:8].upper()}",
         title=payload.title.strip(),
         description=payload.description.strip(),
         category=payload.category.strip(),
         location=payload.location.strip(),
-        reporter_name=payload.reporter_name.strip(),
+        reporter_name=reporter,
         priority=payload.priority,
         status=IssueStatus.SUBMITTED.value,
+        user_id=user_id,
     )
 
     db.add(issue)
@@ -298,8 +448,14 @@ def create_issue(
 # ---------------- VIEW ALL ISSUES ----------------
 
 @app.get("/api/issues", response_model=list[IssueOut])
-def list_issues(db: Session = Depends(get_db)):
+def list_issues(
+    my_reports: bool = False,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
     statement = select(Issue).order_by(Issue.id.desc())
+    if my_reports and current_user:
+        statement = statement.where(Issue.user_id == current_user.id)
     return db.scalars(statement).all()
 
 
@@ -349,8 +505,52 @@ def update_status(
         )
 
     issue.status = payload.status.value
+    if payload.assigned_staff_name is not None:
+        issue.assigned_staff_name = payload.assigned_staff_name
     issue.updated_at = datetime.utcnow()
 
+    db.commit()
+    db.refresh(issue)
+    return issue
+
+
+# ---------------- ASSIGN ISSUE TO STAFF ----------------
+
+@app.patch(
+    "/api/issues/{tracking_id}/assign",
+    response_model=IssueOut
+)
+def assign_issue(
+    tracking_id: str,
+    payload: IssueAssign,
+    db: Session = Depends(get_db)
+):
+    issue = db.scalar(
+        select(Issue).where(
+            Issue.tracking_id == tracking_id.upper()
+        )
+    )
+
+    if issue is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Issue not found"
+        )
+
+    if payload.assigned_to_id is not None:
+        staff_user = db.scalar(select(User).where(User.id == payload.assigned_to_id))
+        if staff_user:
+            issue.assigned_to_id = staff_user.id
+            issue.assigned_staff_name = staff_user.full_name
+        else:
+            issue.assigned_to_id = payload.assigned_to_id
+    if payload.assigned_staff_name is not None:
+        issue.assigned_staff_name = payload.assigned_staff_name
+
+    if issue.status == IssueStatus.SUBMITTED.value:
+        issue.status = IssueStatus.ASSIGNED.value
+
+    issue.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(issue)
     return issue

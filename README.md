@@ -1,182 +1,172 @@
-# 🏫 FixMyCampus
+# 🏫 FixMyCampus — Campus Facility & Grievance Management System
 
-### Smart Campus Issue Reporting and Resolution System
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.13+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00.svg?style=flat&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org)
+[![Chart.js](https://img.shields.io/badge/Chart.js-4.0+-FF6384.svg?style=flat&logo=chart.js&logoColor=white)](https://www.chartjs.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-FixMyCampus is a web-based application designed to make campus issue reporting and resolution easier, faster, and more transparent. It provides a centralized platform where campus-related problems can be reported, tracked, and managed efficiently.
+> A modern full-stack web platform for reporting, tracking, and resolving campus facility issues and maintenance requests in real time.
 
-The project aims to improve communication between students and campus administrators while helping institutions organize maintenance requests and monitor their resolution.
+---
 
-## 🎯 Problem Statement
+## 🌟 Overview
 
-Campus issues such as broken fans, electrical faults, damaged furniture, and cleanliness problems are often reported through informal channels. This can make it difficult to track complaints, monitor progress, and ensure timely resolution.
+**FixMyCampus** streamlines communication between students, faculty, and campus facility management. When infrastructure breaks down (broken fans, water leaks, electrical faults, damaged benches), students can submit a detailed report within seconds and track resolution progress using a unique tracking ID—without requiring complex sign-up hurdles.
 
-**FixMyCampus addresses this problem by providing a centralized digital system for reporting, tracking, and managing campus issues.**
+Facility administrators have a dedicated management workspace featuring KPI counters, inline status updates, ticket inspection modals, and live visual analytics.
+
+---
 
 ## ✨ Features
 
-- 📝 **Issue Reporting:** Submit campus-related problems through an online form.
-- 🔎 **Unique Tracking ID:** Identify and track each reported issue using its tracking ID.
-- 📋 **Issue Management:** View submitted reports in a centralized admin dashboard.
-- 🔄 **Status Updates:** Update issue statuses to monitor resolution progress.
-- 📊 **Dashboard Statistics:** View total reports and status-wise counts.
-- 📈 **Analytics Dashboard:** Visualize reports by status, priority, category, and trends.
-- 🔍 **Search and Filtering:** Find reports using available search and filter options.
-- 🏢 **Centralized Issue Tracking:** Keep campus complaints organized in one place.
+### 👨‍🎓 Student & Public Portal
+- **Instant Reporting**: Submit reports with title, category, location, priority level, reporter name, and description.
+- **Unique Tracking Code**: Generates human-readable IDs (`FMC-XXXXXXXX`) with one-click clipboard copying.
+- **Standalone Issue Tracker (`track.html`)**: Search any ticket by ID to check current status, priority, and updates in real time.
+- **Live Search & Filter**: Instant client-side search across all reports by keyword, category, or status with XSS sanitization.
+- **Live Campus Metrics**: Real-time counter displaying Total, Open, and Resolved campus grievances.
 
-## 🛠️ Technology Stack
+### 🛠️ Administrator Workspace (`admin.html`)
+- **Metric KPI Cards**: Live cards tracking *Total*, *Submitted*, *In Progress*, and *Resolved* issues.
+- **Inline Status Triage**: Update tickets through standard workflows (`Submitted` ➔ `Under Review` ➔ `Assigned` ➔ `In Progress` ➔ `Resolved` ➔ `Closed` / `Rejected`).
+- **Interactive Report Modal**: Click any issue title or tracking ID to inspect full ticket history and timestamps.
+- **Live Analytics Dashboard (Chart.js)**:
+  - 🍩 **Report Status** (Doughnut Chart)
+  - 🍩 **Priority Distribution** (Doughnut Chart)
+  - 📊 **Issue Categories** (Horizontal Bar Chart)
+  - 📈 **Reporting Trends Over Time** (Smooth Area Line Chart)
 
-| Technology | Purpose |
-|---|---|
-| Python | Backend development |
-| FastAPI | REST API development |
-| SQLAlchemy | Database interaction |
-| HTML5 | Web page structure |
-| CSS3 | Styling and layout |
-| JavaScript | Frontend functionality and API integration |
-| Chart.js | Analytics and data visualization |
-| Git and GitHub | Version control and collaboration |
+### 🔐 Security & Database Architecture
+- **Modern ORM**: Powered by SQLAlchemy 2.0 with type-annotated `Mapped` models.
+- **Password Security**: Salted 12-round password hashing using `bcrypt`.
+- **Token Ready**: Integrated `pyjwt` infrastructure for role-based authentication.
+- **Three-Tier Roles**: Built-in support for `student`, `staff`, and `admin` roles.
+- **Safe Migrations**: Backward-compatible schema evolution preserving all existing reports.
 
-## 🏗️ Project Structure
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Backend** | [FastAPI](https://fastapi.tiangolo.com/) | High-performance asynchronous REST API |
+| **Language** | [Python 3.13+](https://www.python.org/) | Core backend programming language |
+| **ORM / Database** | [SQLAlchemy 2.0](https://www.sqlalchemy.org/) + [SQLite](https://www.sqlite.org/) | Relational database modeling and persistence |
+| **Security** | [Bcrypt](https://pypi.org/project/bcrypt/) + [PyJWT](https://pyjwt.readthedocs.io/) | Salted password hashing & JWT tokens |
+| **Frontend** | Vanilla HTML5, CSS3, JavaScript (ES6+) | Lightweight, dependency-free responsive client |
+| **Data Visualization** | [Chart.js](https://www.chartjs.org/) | Interactive visual dashboard charts |
+
+---
+
+## 📂 Project Structure
 
 ```text
 FixMycampus/
-├── main.py
 ├── frontend/
-│   ├── index.html
-│   ├── admin.html
-│   ├── track.html
-│   ├── style.css
-│   ├── script.js
-│   ├── admin.js
-│   └── admin.css
-├── README.md
-└── ...
+│   ├── index.html        # Public reporting & recent issues portal
+│   ├── script.js         # Public portal logic & XSS sanitizer
+│   ├── style.css         # Main modern design system
+│   ├── track.html        # Dedicated issue tracking page
+│   ├── track.js          # Direct tracking lookup handler
+│   ├── admin.html        # Admin management & analytics workspace
+│   ├── admin.js          # Admin triage, filtering, modal & Chart.js charts
+│   └── admin.css         # Admin workspace stylesheet
+├── fixmycampus.db        # SQLite database
+├── main.py               # FastAPI backend & database models
+├── requirements.txt      # Python dependencies
+├── run.py                # 1-click launcher for backend & frontend
+├── README.md             # Project documentation
+└── .gitignore            # Git exclusions (.venv, caches, etc.)
 ```
 
-*Note: This is a representative structure. Your repository may contain additional files or use slightly different filenames.*
+---
 
-## ⚙️ Installation and Setup
+## 🚀 Quick Start Guide
 
-### Prerequisites
+### 1. Prerequisites
+- Python 3.10+ installed
+- Git installed
 
-- Python 3.10 or later
-- pip
-- Git
-- A code editor such as Visual Studio Code
-
-### 1. Clone the repository
-
+### 2. Clone the Repository
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/AdityaAdsul07/FixMycampus.git
 cd FixMycampus
 ```
 
-Replace `YOUR_GITHUB_REPOSITORY_URL` with your repository's actual URL.
-
-### 2. Create a virtual environment
-
+### 3. Create & Activate Virtual Environment
 ```bash
+# Windows
 python -m venv .venv
+.\.venv\Scripts\activate
+
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-### 3. Activate the virtual environment
-
-For Windows PowerShell:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-### 4. Install the required dependencies
-
-If a `requirements.txt` file is available:
-
+### 4. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-Otherwise, install the dependencies specified by your project. The backend uses FastAPI, SQLAlchemy, and Uvicorn.
+### 5. Launch the Application
 
-### 5. Run the backend
-
-From the project root, run:
-
+**Option A — Using the 1-Click Launcher:**
 ```bash
-python -m uvicorn main:app --reload
+python run.py
 ```
+*This starts the FastAPI backend at port `8000`, the frontend server at port `5500`, and opens both pages in your browser automatically.*
 
-Backend URL: http://127.0.0.1:8000
-
-API documentation: http://127.0.0.1:8000/docs
-
-### 6. Run the frontend
-
-Open a second terminal in the project root and run:
-
+**Option B — Starting the Backend Manually:**
 ```bash
-python -m http.server 5173 --directory frontend
+uvicorn main:app --reload --port 8000
 ```
-
-Open these pages in your browser:
-
-- **Issue Reporting:** http://127.0.0.1:5173/
-- **Admin Dashboard:** http://127.0.0.1:5173/admin.html
-- **Issue Tracking:** http://127.0.0.1:5173/track.html
-
-Keep both the backend and frontend terminals running while testing the application.
-
-## 🔄 Application Workflow
-
-1. A user submits an issue through the reporting form.
-2. The backend processes the submitted information and creates an issue record.
-3. The issue receives a unique tracking ID.
-4. The user can use the tracking page to check its status.
-5. Administrators view and manage reports through the dashboard.
-6. Issue statuses are updated as work progresses.
-7. Dashboard statistics and analytics help monitor reported issues.
-
-## 🚀 Future Enhancements
-
-The following features are potential improvements for future versions:
-
-- 🔐 Secure user registration and login
-- 👥 Role-based access for students, administrators, and staff
-- 🏢 Assignment of issues to departments and responsible staff
-- 🔔 In-app notifications for issue status changes
-- 🖼️ Image attachments for reporting problems
-- 📜 Issue history and resolution records
-- 📱 Improved mobile responsiveness
-- ☁️ Deployment for use across a college campus
-
-*These enhancements are planned and may not yet be implemented in the current version.*
-
-## 🎓 Project Objective
-
-The objective of FixMyCampus is to simplify campus issue reporting, improve transparency, and help institutions manage maintenance and other campus-related problems through a centralized digital platform.
-
-## 🤝 Contributing
-
-Contributions and suggestions are welcome.
-
-1. Fork the repository.
-2. Create a new branch for your changes.
-3. Make your changes and test them.
-4. Commit and push your changes.
-5. Open a pull request describing your improvements.
-
-## 🔒 Security
-
-- Do not commit passwords, API keys, or secret tokens.
-- Keep virtual environments and sensitive local data out of version control.
-- Use a `.gitignore` file to exclude unnecessary and sensitive files.
-- Implement authentication and backend authorization before exposing administrative functionality publicly.
-
-## 📄 License
-
-A license has not yet been specified. Add an appropriate open-source license if you want to define how others may use, modify, and distribute this project.
+Then open `frontend/index.html` or `frontend/admin.html` with VS Code Live Server or directly in your browser.
 
 ---
 
-### 💙 FixMyCampus
+## 🔑 Default Administrator Credentials
 
-**Making campus issue reporting and resolution simpler, smarter, and more transparent.**
+On first run, the database automatically seeds a default administrator account:
+- **Email:** `admin@fixmycampus.edu`
+- **Password:** `Admin@123`
+- **Role:** `admin`
+
+---
+
+## 📡 REST API Reference
+
+Interactive Swagger documentation is available at:  
+👉 **`http://127.0.0.1:8000/docs`**
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Server health check |
+| `POST` | `/api/issues` | Submit a new campus report |
+| `GET` | `/api/issues` | List all campus issues (newest first) |
+| `GET` | `/api/issues/{tracking_id}` | Retrieve details of a specific issue |
+| `PATCH`| `/api/issues/{tracking_id}/status` | Update issue progress status |
+| `GET` | `/api/stats` | Retrieve aggregate statistics by status |
+
+---
+
+## 🗺️ Roadmap
+
+- [x] **Phase 1**: Database User Model, Bcrypt Password Security, & Admin Seed
+- [ ] **Phase 2**: Authentication Endpoints (`/register`, `/login`, JWT Tokens)
+- [ ] **Phase 3**: Frontend Login Gateway & Admin Route Protection
+- [ ] **Phase 4**: Issue Assignment to Staff & Maintenance Departments
+- [ ] **Phase 5**: Real-Time In-App Notifications
+
+---
+
+## 👤 Author
+
+* **Aditya Adsul** — [@AdityaAdsul07](https://github.com/AdityaAdsul07)
+
+---
+
+## 📄 License
+
+This project is open-source under the [MIT License](LICENSE).
