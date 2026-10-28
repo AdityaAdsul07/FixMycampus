@@ -462,10 +462,10 @@ app = FastAPI(
 
 # Authentication uses a Bearer token (not cookies), so CORS isn't what protects the API.
 # Origins are still restricted by default; override with CORS_ORIGINS="https://a.com,https://b.com".
-_default_origins = "http://127.0.0.1:5500,http://localhost:5500,null"
+# Allow all origins so local servers on port 5173, 5500, 8000, etc. connect smoothly
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", _default_origins).split(",") if o.strip()],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
