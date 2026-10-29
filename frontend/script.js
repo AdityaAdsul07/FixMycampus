@@ -68,10 +68,10 @@ async function loadStats() {
   try {
     const stats = await requestJSON(`${API}/stats`);
 
-    document.getElementById("total-count").textContent = stats.total;
-    document.getElementById("open-count").textContent = stats.open;
+    document.getElementById("total-count").textContent = stats.total ?? 0;
+    document.getElementById("open-count").textContent = stats.open ?? 0;
     document.getElementById("resolved-count").textContent =
-      stats.by_status?.Resolved ?? 0;
+      stats.resolved ?? stats.by_status?.Resolved ?? 0;
   } catch (error) {
     document.getElementById("total-count").textContent = "—";
     document.getElementById("open-count").textContent = "—";

@@ -54,6 +54,17 @@ trackingForm.addEventListener("submit", async (event) => {
     document.getElementById("result-priority").textContent =
       issue.priority;
 
+    const resolutionBox = document.getElementById("resolution-box");
+    const resolutionText = document.getElementById("result-resolution");
+    if (resolutionBox && resolutionText) {
+      if (issue.resolution_notes) {
+        resolutionText.textContent = issue.resolution_notes;
+        resolutionBox.hidden = false;
+      } else {
+        resolutionBox.hidden = true;
+      }
+    }
+
     await renderTimeline(issue.tracking_id);
     trackingResult.hidden = false;
   } catch (error) {

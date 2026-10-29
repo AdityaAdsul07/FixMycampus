@@ -6,7 +6,7 @@ from pathlib import Path
 # Configure the app BEFORE importing it: temp database, fixed secrets.
 _tmp = tempfile.mkdtemp()
 os.environ["DATABASE_URL"] = f"sqlite:///{Path(_tmp) / 'test.db'}"
-os.environ["JWT_SECRET"] = "test-secret-not-for-production"
+os.environ["JWT_SECRET"] = "test-secret-must-be-at-least-32-chars-long-for-hmac-sha256!"
 os.environ["ADMIN_EMAIL"] = "admin@test.edu"
 os.environ["ADMIN_PASSWORD"] = "AdminPass123"
 

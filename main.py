@@ -32,17 +32,36 @@ def utcnow() -> datetime:
 
 # ---------------- SECURITY CONFIGURATION ----------------
 
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").strip().lower()
+
+
 def load_jwt_secret() -> str:
-    """Use JWT_SECRET from the environment; otherwise create a random one and keep it
-    in a git-ignored file so tokens stay valid across restarts. No secret is in the code."""
-    from_env = os.environ.get("JWT_SECRET")
+    """Use JWT_SECRET from the environment.
+    In production mode, a secret of at least 32 characters is strictly required.
+    In development mode, a secure 64-hex-character secret is generated and stored locally."""
+    from_env = os.environ.get("JWT_SECRET", "").strip()
     if from_env:
+        if len(from_env) < 32 and ENVIRONMENT == "production":
+            raise RuntimeError("JWT_SECRET must be at least 32 characters long in production mode.")
         return from_env
+
+    if ENVIRONMENT == "production":
+        raise RuntimeError(
+            "JWT_SECRET environment variable is missing. "
+            "A secure secret (minimum 32 characters) must be configured in production mode."
+        )
+
     secret_file = BASE_DIR / ".jwt_secret"
     if secret_file.exists():
-        return secret_file.read_text().strip()
-    secret = secrets.token_hex(32)
-    secret_file.write_text(secret)
+        secret = secret_file.read_text().strip()
+        if len(secret) >= 32:
+            return secret
+
+    secret = secrets.token_hex(32)  # 64 hex characters (256 bits)
+    try:
+        secret_file.write_text(secret)
+    except Exception:
+        pass
     return secret
 
 
@@ -160,6 +179,7 @@ class Issue(Base):
     user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     assigned_to_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     assigned_staff_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    resolution_notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -197,21 +217,31 @@ def upgrade_db_schema():
             conn.exec_driver_sql(
                 "ALTER TABLE issues ADD COLUMN assigned_staff_name VARCHAR(100) DEFAULT NULL"
             )
+        if "resolution_notes" not in columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE issues ADD COLUMN resolution_notes VARCHAR(500) DEFAULT NULL"
+            )
 
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@fixmycampus.edu").strip().lower()
 
 
 def seed_default_admin():
-    """Create the first admin. Password comes from ADMIN_PASSWORD, or is generated and
-    printed once - there is no default password in the source code."""
+    """Create the initial admin user safely.
+    In production mode, ADMIN_PASSWORD is required.
+    In development mode, a secure password is generated and displayed on first run."""
     with SessionLocal() as db:
         if db.scalar(select(User).where(User.role == UserRole.ADMIN.value)) is not None:
             return
         password = os.environ.get("ADMIN_PASSWORD")
+        if ENVIRONMENT == "production" and not password:
+            raise RuntimeError("ADMIN_PASSWORD environment variable must be set in production mode.")
         generated = password is None
         if generated:
-            password = secrets.token_urlsafe(10)
+            password = secrets.token_urlsafe(12)
+        else:
+            if len(password) < 8 or not (re.search(r"[A-Za-z]", password) and re.search(r"\d", password)):
+                raise ValueError("ADMIN_PASSWORD must be at least 8 characters long and contain both letters and numbers.")
         db.add(User(
             email=ADMIN_EMAIL,
             full_name="Campus Administrator",
@@ -381,8 +411,9 @@ class StatusUpdate(BaseModel):
     status: IssueStatus
     note: str | None = Field(default=None, max_length=300)
     assigned_staff_name: str | None = Field(default=None, max_length=100)
+    resolution_notes: str | None = Field(default=None, max_length=500)
 
-    _strip = field_validator("note", "assigned_staff_name", mode="before")(_strip_strings)
+    _strip = field_validator("note", "assigned_staff_name", "resolution_notes", mode="before")(_strip_strings)
 
 
 class IssueAssign(BaseModel):
@@ -405,6 +436,7 @@ class IssueOut(ORMModel):
     user_id: int | None = None
     assigned_to_id: int | None = None
     assigned_staff_name: str | None = None
+    resolution_notes: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -444,6 +476,46 @@ def add_event(db: Session, issue: Issue, actor: str, note: str | None = None):
     db.add(IssueEvent(issue_id=issue.id, status=issue.status, note=note or None, actor=actor))
 
 
+# Allowed status progression for campus issues
+ALLOWED_TRANSITIONS: dict[str, set[str]] = {
+    IssueStatus.SUBMITTED.value: {
+        IssueStatus.UNDER_REVIEW.value,
+        IssueStatus.ASSIGNED.value,
+        IssueStatus.IN_PROGRESS.value,
+        IssueStatus.RESOLVED.value,
+        IssueStatus.REJECTED.value,
+    },
+    IssueStatus.UNDER_REVIEW.value: {
+        IssueStatus.ASSIGNED.value,
+        IssueStatus.IN_PROGRESS.value,
+        IssueStatus.RESOLVED.value,
+        IssueStatus.REJECTED.value,
+    },
+    IssueStatus.ASSIGNED.value: {
+        IssueStatus.IN_PROGRESS.value,
+        IssueStatus.UNDER_REVIEW.value,
+        IssueStatus.RESOLVED.value,
+        IssueStatus.REJECTED.value,
+    },
+    IssueStatus.IN_PROGRESS.value: {
+        IssueStatus.RESOLVED.value,
+        IssueStatus.ASSIGNED.value,
+        IssueStatus.UNDER_REVIEW.value,
+        IssueStatus.REJECTED.value,
+    },
+    IssueStatus.RESOLVED.value: {
+        IssueStatus.CLOSED.value,
+        IssueStatus.IN_PROGRESS.value,
+    },
+    IssueStatus.CLOSED.value: {
+        IssueStatus.IN_PROGRESS.value,
+    },
+    IssueStatus.REJECTED.value: {
+        IssueStatus.UNDER_REVIEW.value,
+    },
+}
+
+
 # ---------------- APPLICATION ----------------
 
 @asynccontextmanager
@@ -462,10 +534,21 @@ app = FastAPI(
 
 # Authentication uses a Bearer token (not cookies), so CORS isn't what protects the API.
 # Origins are still restricted by default; override with CORS_ORIGINS="https://a.com,https://b.com".
-# Allow all origins so local servers on port 5173, 5500, 8000, etc. connect smoothly
+def get_allowed_origins() -> list[str]:
+    origins_env = os.environ.get("CORS_ORIGINS", "").strip()
+    if origins_env:
+        if origins_env == "*":
+            return ["*"]
+        return [o.strip() for o in origins_env.split(",") if o.strip()]
+    if ENVIRONMENT == "production":
+        return []
+    # In development, allow all origins by default for seamless local testing
+    return ["*"]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=get_allowed_origins(),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -625,13 +708,31 @@ def update_status(
     db: Session = Depends(get_db),
 ):
     issue = find_issue(db, tracking_id)
-    changed = issue.status != payload.status.value
-    issue.status = payload.status.value
+    new_status = payload.status.value
+    changed = issue.status != new_status
+
+    if changed:
+        allowed = ALLOWED_TRANSITIONS.get(issue.status, set())
+        if new_status not in allowed:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"Cannot transition issue from '{issue.status}' to '{new_status}'. Allowed: {sorted(list(allowed))}",
+            )
+        issue.status = new_status
+
     if payload.assigned_staff_name is not None:
         issue.assigned_staff_name = payload.assigned_staff_name
+
+    if payload.resolution_notes is not None:
+        issue.resolution_notes = payload.resolution_notes
+    elif payload.note and new_status in (IssueStatus.RESOLVED.value, IssueStatus.CLOSED.value, IssueStatus.REJECTED.value):
+        issue.resolution_notes = payload.note
+
     issue.updated_at = utcnow()
-    if changed or payload.note:
-        add_event(db, issue, actor=actor.full_name, note=payload.note)
+    if changed or payload.note or payload.resolution_notes:
+        event_note = payload.resolution_notes or payload.note or f"Status changed to {new_status}"
+        add_event(db, issue, actor=actor.full_name, note=event_note)
+
     db.commit()
     db.refresh(issue)
     return issue_view(issue, actor)
@@ -664,16 +765,42 @@ def assign_issue(
 
 @app.get("/api/stats")
 def get_stats(db: Session = Depends(get_db)):
-    def grouped(column):
-        return {name: count for name, count in db.execute(select(column, func.count()).group_by(column)).all()}
-
+    all_issues = db.scalars(select(Issue)).all()
     by_status = {s.value: 0 for s in IssueStatus}
-    by_status.update(grouped(Issue.status))
-    total = sum(by_status.values())
+    by_priority = defaultdict(int)
+    by_category = defaultdict(int)
+
+    for item in all_issues:
+        st = item.status or "Submitted"
+        matched_status = None
+        for s in IssueStatus:
+            if s.value.lower() == st.lower() or s.value.lower().replace(" ", "-") == st.lower().replace(" ", "-"):
+                matched_status = s.value
+                break
+        if matched_status:
+            by_status[matched_status] = by_status.get(matched_status, 0) + 1
+        else:
+            by_status[st] = by_status.get(st, 0) + 1
+
+        if item.priority:
+            by_priority[item.priority] += 1
+        if item.category:
+            by_category[item.category] += 1
+
+    total = len(all_issues)
+    open_count = sum(c for s, c in by_status.items() if s not in CLOSED_STATUSES)
+
     return {
         "total": total,
-        "open": sum(c for s, c in by_status.items() if s not in CLOSED_STATUSES),
+        "open": open_count,
+        "submitted": by_status.get(IssueStatus.SUBMITTED.value, 0),
+        "under_review": by_status.get(IssueStatus.UNDER_REVIEW.value, 0),
+        "assigned": by_status.get(IssueStatus.ASSIGNED.value, 0),
+        "in_progress": by_status.get(IssueStatus.IN_PROGRESS.value, 0),
+        "resolved": by_status.get(IssueStatus.RESOLVED.value, 0),
+        "closed": by_status.get(IssueStatus.CLOSED.value, 0),
+        "rejected": by_status.get(IssueStatus.REJECTED.value, 0),
         "by_status": by_status,
-        "by_priority": grouped(Issue.priority),
-        "by_category": grouped(Issue.category),
+        "by_priority": dict(by_priority),
+        "by_category": dict(by_category),
     }

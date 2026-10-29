@@ -5,7 +5,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00.svg)](https://www.sqlalchemy.org)
-[![Tests](https://img.shields.io/badge/tests-16%20passing-brightgreen.svg)](tests/test_api.py)
+[![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen.svg)](tests/test_api.py)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -37,7 +37,9 @@
 | Brute force | Login is limited to 5 failed attempts per 5 minutes (per IP + email) |
 | Privacy | Public API hides reporter names and staff names; only staff and the reporter see them |
 | XSS | Frontend renders with `textContent` / escaped HTML |
-| CORS | Restricted to the frontend origin (configurable with `CORS_ORIGINS`) |
+| CORS | Configurable with `CORS_ORIGINS`; defaults to open in development and strictly restricted in production |
+| Status Transitions | Validated state machine (`ALLOWED_TRANSITIONS`) prevents illegal status jumps |
+| Resolution Remarks | Preserved in dedicated `resolution_notes` and activity history on resolution |
 | Timestamps | Sent as explicit UTC (`…Z`) so every browser shows correct local time |
 
 ## 🏗️ Tech Stack
@@ -63,7 +65,7 @@ FixMycampus/
 ├── seed_demo.py          # Demo accounts + 16 sample issues (for presentations)
 ├── requirements.txt      # Runtime dependencies
 ├── requirements-dev.txt  # + pytest, httpx
-├── tests/                # 16 automated API tests
+├── tests/                # 18 automated API tests
 │   ├── conftest.py
 │   └── test_api.py
 └── frontend/
@@ -131,10 +133,11 @@ python -m pytest
 
 | Variable | Purpose | Default |
 | :--- | :--- | :--- |
-| `JWT_SECRET` | Token signing key | random, stored in `.jwt_secret` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | First admin account | `admin@fixmycampus.edu` / generated |
+| `ENVIRONMENT` | Runtime environment (`development` / `production`) | `development` |
+| `JWT_SECRET` | Token signing key (minimum 32 chars in production) | random 64-hex chars, stored in `.jwt_secret` in dev |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Initial admin account (password required in production) | `admin@fixmycampus.edu` / generated in dev |
 | `DATABASE_URL` | Database location | `sqlite:///./fixmycampus.db` |
-| `CORS_ORIGINS` | Allowed frontend origins (comma-separated) | `127.0.0.1:5500`, `localhost:5500` |
+| `CORS_ORIGINS` | Allowed frontend origins (comma-separated or `*`) | `*` in dev, restricted in production |
 
 ## 📡 REST API
 

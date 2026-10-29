@@ -200,19 +200,23 @@ async function loadAdminReports() {
 function updateCounters(reports) {
   setCounter("admin-total", reports.length);
 
+  function normalize(str) {
+    return String(str || "").trim().toLowerCase().replace(/[-_]/g, " ");
+  }
+
   setCounter(
     "admin-submitted",
-    reports.filter(report => report.status === "Submitted").length
+    reports.filter(report => normalize(report.status) === "submitted").length
   );
 
   setCounter(
     "admin-progress",
-    reports.filter(report => report.status === "In Progress").length
+    reports.filter(report => normalize(report.status) === "in progress").length
   );
 
   setCounter(
     "admin-resolved",
-    reports.filter(report => report.status === "Resolved").length
+    reports.filter(report => normalize(report.status) === "resolved").length
   );
 }
 

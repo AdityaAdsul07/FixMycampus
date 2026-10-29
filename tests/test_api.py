@@ -135,3 +135,48 @@ def test_stats(client, new_issue):
     assert stats["total"] == sum(stats["by_status"].values())
     assert stats["by_category"]["Electrical"] >= 1
     assert stats["open"] <= stats["total"]
+
+
+def test_status_transition_rules_and_resolution_remarks(client, new_issue, admin_headers):
+    tid = new_issue["tracking_id"]
+    url = f"/api/issues/{tid}/status"
+
+    # Step 1: Illegal transition from Submitted -> Closed should be rejected with 400
+    res_bad = client.patch(url, json={"status": "Closed"}, headers=admin_headers)
+    assert res_bad.status_code == 400
+    assert "Cannot transition issue" in res_bad.json()["detail"]
+
+    # Step 2: Valid transition Submitted -> In Progress
+    res_progress = client.patch(url, json={"status": "In Progress"}, headers=admin_headers)
+    assert res_progress.status_code == 200
+    assert res_progress.json()["status"] == "In Progress"
+
+    # Step 3: Valid transition In Progress -> Resolved with resolution remarks
+    res_resolved = client.patch(
+        url,
+        json={"status": "Resolved", "resolution_notes": "Replaced faulty capacitor and tested."},
+        headers=admin_headers,
+    )
+    assert res_resolved.status_code == 200
+    assert res_resolved.json()["status"] == "Resolved"
+    assert res_resolved.json()["resolution_notes"] == "Replaced faulty capacitor and tested."
+
+    # Step 4: Valid transition Resolved -> Closed
+    res_closed = client.patch(url, json={"status": "Closed"}, headers=admin_headers)
+    assert res_closed.status_code == 200
+    assert res_closed.json()["status"] == "Closed"
+
+    # Step 5: Verify get_issue returns resolution_notes
+    issue_data = client.get(f"/api/issues/{tid}").json()
+    assert issue_data["resolution_notes"] == "Replaced faulty capacitor and tested."
+
+
+def test_stats_extended_keys(client, new_issue):
+    stats = client.get("/api/stats").json()
+    assert "total" in stats
+    assert "open" in stats
+    assert "submitted" in stats
+    assert "in_progress" in stats
+    assert "resolved" in stats
+    assert stats["total"] >= 1
+    assert stats["open"] >= 0
